@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "airlineticketapp",
-    "slug": "airlineticketapp",
+    "name": "svift",
+    "slug": "svift",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "airlineticketapp",
+    "scheme": "svift",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -37,6 +37,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6bfaadb8-460f-484f-a20c-64b76f8fdf6c"
+      }
     }
   }
 }
