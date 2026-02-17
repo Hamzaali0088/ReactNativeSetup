@@ -12,7 +12,7 @@ module.exports = {
         primary: '#ffd301',
         secondary: '#07a23a',
         primarybg: '#f8eb67',
-        quaternary: '#333333',
+        secondarybg: '#fcf5b5',
         quinary: '#444444',
         senary: '#555555',
       },

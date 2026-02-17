@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
+import { API_BASE_URL } from '@/lib/config';
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function SignupScreen() {
     setLoading(true);
 
     try {
-      await axios.post('http://localhost:4000/auth/signup/start', {
+      await axios.post(`${API_BASE_URL}/auth/signup/start`, {
         email,
       });
 

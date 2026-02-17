@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
+import { API_BASE_URL } from '@/lib/config';
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
@@ -25,8 +26,8 @@ export default function VerifyEmailScreen() {
     try {
       const endpoint =
         mode === 'login'
-          ? 'http://localhost:4000/auth/login/verify'
-          : 'http://localhost:4000/auth/verify-email';
+          ? `${API_BASE_URL}/auth/login/verify`
+          : `${API_BASE_URL}/auth/verify-email`;
 
       await axios.post(endpoint, {
         email,
