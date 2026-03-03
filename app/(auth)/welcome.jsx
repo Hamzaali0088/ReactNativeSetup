@@ -1,10 +1,71 @@
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { useEffect } from 'react';
+import { Platform, View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Image } from 'expo-image';
+import * as Google from 'expo-auth-session/providers/google';
+import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL, GOOGLE_WEB_CLIENT_ID } from '@/lib/config';
+
+WebBrowser.maybeCompleteAuthSession();
+
+// Web uses its own origin as the redirect URI (registered as http://localhost:8081 in Google Console).
+// Native/Expo Go routes through the Expo Auth Proxy (registered as https://auth.expo.io/@uxamabt/svift).
+const isWeb = Platform.OS === 'web';
+const redirectUri = isWeb
+  ? AuthSession.makeRedirectUri()
+  : 'https://auth.expo.io/@uxamabt/svift';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+
+  const [request, response, promptAsync] = Google.useAuthRequest(
+    { clientId: GOOGLE_WEB_CLIENT_ID, redirectUri },
+    { authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth' },
+  );
+
+  useEffect(() => {
+    // Log the redirect URI so you can register it in Google Cloud Console
+    console.log('[Google OAuth] Redirect URI to register:', redirectUri);
+  }, []);
+
+  useEffect(() => {
+    if (!response) return;
+    console.log('[Google OAuth] response.type:', response.type);
+    console.log('[Google OAuth] response:', JSON.stringify(response, null, 2));
+
+    if (response.type === 'success') {
+      // access token can live in authentication.accessToken (native) or params.access_token (web)
+      const accessToken =
+        response.authentication?.accessToken ?? response.params?.access_token;
+      if (accessToken) {
+        authenticateWithBackend(accessToken);
+      } else {
+        console.warn('[Google OAuth] No access token in response', response);
+        Alert.alert('Google Sign-In Failed', 'No access token received.');
+      }
+    } else if (response.type === 'error') {
+      console.error('[Google OAuth] error:', response.error);
+      Alert.alert('Google Sign-In Failed', response.error?.message ?? 'Please try again.');
+    }
+  }, [response]);
+
+  async function authenticateWithBackend(accessToken) {
+    try {
+      const result = await axios.post(`${API_BASE_URL}/auth/login/google`, { accessToken });
+      const token = result.data?.token;
+      if (token) {
+        await AsyncStorage.setItem('svift_access_token', token);
+        router.replace('/(tabs)');
+      }
+    } catch (err) {
+      console.error('Google login failed', err);
+      Alert.alert('Login Failed', 'Could not sign in with Google. Please try again.');
+    }
+  }
 
   return (
     <ScrollView className="flex-1 bg-white" contentContainerStyle={{ flexGrow: 1 }}>
@@ -38,7 +99,10 @@ export default function WelcomeScreen() {
 
           {/* Social buttons */}
           <View className="flex-row gap-3 mt-4">
-            <Pressable className="flex-1 border border-neutral-200 rounded-full py-3 items-center bg-white flex-row justify-center gap-2">
+            <Pressable
+              className="flex-1 border border-neutral-200 rounded-full py-3 items-center bg-white flex-row justify-center gap-2"
+              onPress={() => promptAsync(isWeb ? {} : { useProxy: true })}
+            >
               <MaterialCommunityIcons name="google" size={18} color="#000000" />
               <Text className="text-sm font-medium text-neutral-800">Google</Text>
             </Pressable>

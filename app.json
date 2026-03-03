@@ -42,8 +42,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "ce09914b-7fa8-4fae-9eb1-27800afd689c"
+        "projectId": "688be7f4-fb91-476f-9842-7690a9311ff4"
       }
-    }
+    },
+    "owner": "avalunas-organization"
   }
 }
