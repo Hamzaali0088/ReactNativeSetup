@@ -8,7 +8,12 @@ import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL, GOOGLE_WEB_CLIENT_ID } from '@/lib/config';
+import {
+  API_BASE_URL,
+  GOOGLE_WEB_CLIENT_ID,
+  GOOGLE_ANDROID_CLIENT_ID,
+  GOOGLE_IOS_CLIENT_ID,
+} from '@/lib/config';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -23,7 +28,14 @@ export default function WelcomeScreen() {
   const router = useRouter();
 
   const [request, response, promptAsync] = Google.useAuthRequest(
-    { clientId: GOOGLE_WEB_CLIENT_ID, redirectUri },
+    {
+      webClientId: GOOGLE_WEB_CLIENT_ID,
+      androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+      iosClientId: GOOGLE_IOS_CLIENT_ID,
+      redirectUri,
+      scopes: ['profile', 'email'],
+      responseType: 'token',
+    },
     { authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth' },
   );
 
