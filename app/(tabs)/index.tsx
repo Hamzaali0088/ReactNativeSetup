@@ -1,10 +1,13 @@
-import { View, Text, ScrollView, Pressable, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, Platform, Modal, Animated } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Colors } from '@/constants/Colors';
 import { Image } from 'expo-image';
 import { CircleFlag } from 'react-circle-flags';
 import { Notification, DirectUp, WalletAdd1, InfoCircle, ProfileAdd, ArrowRight, Scan,DirectSend, Global, HomeTrendUp, ReceiptText, } from 'iconsax-react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import InviteFriendImg from '../../assets/images/invite-friend.png';
 
 const SERVICES = [
   { id: 'sviftpay', label: 'SviftPay', icon: Scan },
@@ -20,6 +23,39 @@ export default function HomeScreen() {
   const balance = '3634.22';
   const currency = 'EUR';
   const router = useRouter();
+  const [showAccountOptions, setShowAccountOptions] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const accountOptionsSheetSlide = useRef(new Animated.Value(300)).current;
+
+  useEffect(() => {
+    if (showAccountOptions) {
+      accountOptionsSheetSlide.setValue(300);
+      Animated.spring(accountOptionsSheetSlide, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    }
+  }, [showAccountOptions]);
+
+  function closeAccountOptions() {
+    Animated.timing(accountOptionsSheetSlide, {
+      toValue: 300,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => setShowAccountOptions(false));
+  }
+
+  useEffect(() => {
+    AsyncStorage.getItem('svift_is_verified')
+      .then((value) => {
+        if (value === 'true') {
+          setIsVerified(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <ScrollView
@@ -79,7 +115,7 @@ export default function HomeScreen() {
               </View>
               <Text className="text-xs font-medium text-neutral-700">Add money</Text>
             </Pressable>
-            <Pressable className="items-center">
+            <Pressable className="items-center" onPress={() => setShowAccountOptions(true)}>
               <View className="h-11 w-11 rounded-full shadow-[inset_3px_0_6px_rgba(255,255,143,0.9),inset_0_3px_6px_rgba(255,255,143,0.9)] flex items-center justify-center">
                 <InfoCircle size={20} color="#000000" />
               </View>
@@ -89,26 +125,58 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* ——— Section 2: Main content (White) ——— Verify + Grid + Carousel */}
+      {/* ——— Section 2: Main content (White) ——— Invite / Verify + Grid + Carousel */}
       <View className="flex-1 bg-white px-4 py-5">
-        <Pressable
-          className="flex-row items-center justify-between p-4 rounded-2xl bg-rose-50"
-          onPress={() => router.push('/(auth)/verify-phone' as any)}
-        >
-          <View className="flex-row items-center gap-3 flex-1">
-            <View className="h-11 w-11 rounded-full bg-white items-center justify-center">
-              <ProfileAdd size={20} color="#000000"/>
+        {/* Invite friends banner – only after verification */}
+        {isVerified && (
+          <View className="mb-4 rounded-2xl bg-[#eaf7f3] px-4 py-3 flex-row items-center justify-between">
+            <View className="flex-1 pr-3">
+              <Text className="text-xs font-semibold text-neutral-900 mb-1">
+                Earn 15 EUR when you refer your friends.
+              </Text>
+              <Text className="text-[11px] text-neutral-600 mb-3">
+                You earn when they make their first international transfer of 100 EUR or more.
+              </Text>
+              <View className="flex-row items-center gap-3">
+                <Pressable className="px-3 py-1 rounded-full bg-emerald-500">
+                  <Text className="text-[11px] font-semibold text-white">Invite friends</Text>
+                </Pressable>
+                <Pressable>
+                  <Text className="text-[11px] text-neutral-500">Dismiss</Text>
+                </Pressable>
+              </View>
             </View>
-            <View className="flex-1">
-              <Text className="text-[16px] tracking-wider font-medium text-black">Verify Your Identity</Text>
-              <Text className="text-[15px] tracking-wider font-light text-neutral-500 mt-0.5">Submit your document to verify</Text>
+            <View className="items-center justify-center">
+        <Image
+                source={InviteFriendImg}
+                contentFit="contain"
+                style={{ width: 90, height: 60 }}
+              />
             </View>
           </View>
-          <View className=' items-center justify-center absolute right-2 top-2'>
-            <ArrowRight size={24} color="#ef4444" className='-rotate-45 text-red-500 '/>
-            <View className='h-[1.5px] w-[70%] bg-red-500 absolute right-[2.5px] bottom-0'/>
-          </View>
-        </Pressable>
+        )}
+
+        {/* Verify identity card – hide after verification */}
+        {!isVerified && (
+          <Pressable
+            className="flex-row items-center justify-between p-4 rounded-2xl bg-rose-50"
+            onPress={() => router.push('/(auth)/verify-phone' as any)}
+          >
+            <View className="flex-row items-center gap-3 flex-1">
+              <View className="h-11 w-11 rounded-full bg-white items-center justify-center">
+                <ProfileAdd size={20} color="#000000"/>
+              </View>
+              <View className="flex-1">
+                <Text className="text-[16px] tracking-wider font-medium text-black">Verify Your Identity</Text>
+                <Text className="text-[15px] tracking-wider font-light text-neutral-500 mt-0.5">Submit your document to verify</Text>
+              </View>
+            </View>
+            <View className=' items-center justify-center absolute right-2 top-2'>
+              <ArrowRight size={24} color="#ef4444" className='-rotate-45 text-red-500 '/>
+              <View className='h-[1.5px] w-[70%] bg-red-500 absolute right-[2.5px] bottom-0'/>
+            </View>
+          </Pressable>
+        )}
 
         <View className="flex-row flex-wrap justify-between mt-6">
           {SERVICES.map((item) => (
@@ -139,6 +207,60 @@ export default function HomeScreen() {
           ))}
         </View>
       </View>
+
+      {/* Account options drop-up: backdrop appears immediately, sheet slides up */}
+      <Modal
+        visible={showAccountOptions}
+        transparent
+        animationType="none"
+        onRequestClose={closeAccountOptions}
+      >
+        <View className="flex-1">
+          <Pressable className="absolute inset-0 bg-black/40" onPress={closeAccountOptions} />
+          <Animated.View
+            className="absolute left-0 right-0 bottom-0 bg-white rounded-t-3xl px-6 pt-4 pb-8 shadow-lg"
+            style={{ transform: [{ translateY: accountOptionsSheetSlide }] }}
+          >
+            <Pressable onPress={(e) => e.stopPropagation()}>
+              <View className="items-center mb-3">
+                <View className="w-10 h-1 rounded-full bg-neutral-300" />
+              </View>
+              <View className="flex-row items-center justify-between mb-4">
+                <Text className="text-base font-semibold text-neutral-900">Account Options</Text>
+                <Pressable onPress={closeAccountOptions}>
+                  <MaterialCommunityIcons name="close" size={20} color="#111827" />
+                </Pressable>
+              </View>
+              <Pressable
+                className="flex-row items-center justify-between py-3 border-b border-neutral-200"
+                onPress={() => {
+                  closeAccountOptions();
+                  setTimeout(() => router.push('/account-limits' as any), 220);
+                }}
+              >
+                <View className="flex-row items-center gap-3">
+                  <MaterialCommunityIcons name="tune" size={18} color="#111827" />
+                  <Text className="text-sm text-neutral-900">Account Limits</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={18} color="#9CA3AF" />
+              </Pressable>
+              <Pressable
+                className="flex-row items-center justify-between py-3"
+                onPress={() => {
+                  closeAccountOptions();
+                  setTimeout(() => router.push('/statements-history' as any), 220);
+                }}
+              >
+                <View className="flex-row items-center gap-3">
+                  <MaterialCommunityIcons name="file-document-outline" size={18} color="#111827" />
+                  <Text className="text-sm text-neutral-900">Account Statement</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={18} color="#9CA3AF" />
+              </Pressable>
+            </Pressable>
+          </Animated.View>
+        </View>
+      </Modal>
 
       {/* Section 3: Bottom navigation — rendered by (tabs)/_layout.tsx */}
     </ScrollView>

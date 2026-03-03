@@ -3,6 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'iconsax-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function FaceVerifyScanScreen() {
   const router = useRouter();
@@ -21,7 +22,11 @@ export default function FaceVerifyScanScreen() {
     // Simulate a 5s verification then finish.
     if (verifying) {
       const timer = setTimeout(() => {
-        router.replace('/(tabs)');
+        AsyncStorage.setItem('svift_is_verified', 'true')
+          .catch(() => {})
+          .finally(() => {
+            router.replace('/(tabs)');
+          });
       }, 5000);
       return () => clearTimeout(timer);
     }

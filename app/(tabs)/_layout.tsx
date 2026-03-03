@@ -8,7 +8,16 @@ import { Home, Profile2User, ReceiveSquare2, DirectUp } from 'iconsax-react-nati
 const TAB_YELLOW = '#FACC15';
 const TAB_DEFAULT = '#9CA3AF';
 
+const HIDE_TAB_BAR_ROUTES = ['account-limits', 'additional-information', 'upload-proof-of-funds', 'statements-history'];
+
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const currentRouteName = state.routes[state.index]?.name ?? '';
+  const hideTabBar = HIDE_TAB_BAR_ROUTES.includes(currentRouteName);
+
+  if (hideTabBar) {
+    return null;
+  }
+
   const routes = state.routes.filter((route) => route.name !== 'explore');
 
   const handlePress = (routeName: string, routeKey: string, isFocused: boolean) => {
@@ -193,6 +202,35 @@ export default function TabLayout() {
       <Tabs.Screen name="send" options={{ title: 'Send' }} />
       <Tabs.Screen name="earn" options={{ title: 'Earn' }} />
       <Tabs.Screen name="help" options={{ title: 'Help' }} />
+      {/* Hidden screens navigated to from Home */}
+      <Tabs.Screen
+        name="account-limits"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="additional-information"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="upload-proof-of-funds"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="statements-history"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
       <Tabs.Screen
         name="explore"
         options={{

@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import axios from 'axios';
 import { API_BASE_URL } from '@/lib/config';
 import { ArrowLeft } from 'iconsax-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleLogin() {
     if (!email || !password || loading) return;
@@ -30,6 +32,10 @@ export default function LoginScreen() {
           params: { email, mode: 'login' },
         });
       } else {
+        const token = response.data?.token;
+        if (token) {
+          await AsyncStorage.setItem('svift_access_token', token);
+        }
         router.replace('/(tabs)');
       }
     } catch (err) {
@@ -79,10 +85,17 @@ export default function LoginScreen() {
               <TextInput
                 className="flex-1 text-sm text-neutral-900 focus:outline-none"
                 placeholder="Password"
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
               />
+              <Pressable onPress={() => setShowPassword((prev) => !prev)}>
+                <MaterialCommunityIcons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={18}
+                  color="#9CA3AF"
+                />
+              </Pressable>
             </View>
           </View>
           <Pressable className="">

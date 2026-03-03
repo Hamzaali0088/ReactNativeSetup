@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
+import { API_BASE_URL } from '@/lib/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function CreatePasswordScreen() {
   const router = useRouter();
@@ -26,11 +28,15 @@ export default function CreatePasswordScreen() {
     setLoading(true);
 
     try {
-      await axios.post('http://localhost:4000/auth/signup/complete', {
+      const response = await axios.post(`${API_BASE_URL}/auth/signup/complete`, {
         email,
         password,
       });
 
+      const token = response.data?.token;
+      if (token) {
+        await AsyncStorage.setItem('svift_access_token', token);
+      }
       router.replace('/(tabs)');
     } catch (err) {
       console.error(err);

@@ -3,6 +3,7 @@ import { View, Text, Pressable, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
 import { API_BASE_URL } from '@/lib/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
@@ -29,11 +30,15 @@ export default function VerifyEmailScreen() {
           ? `${API_BASE_URL}/auth/login/verify`
           : `${API_BASE_URL}/auth/verify-email`;
 
-      await axios.post(endpoint, {
+      const response = await axios.post(endpoint, {
         email,
         code: joinedCode,
       });
       if (mode === 'login') {
+        const token = response.data?.token;
+        if (token) {
+          await AsyncStorage.setItem('svift_access_token', token);
+        }
         router.replace('/(tabs)');
       } else {
         router.push({
