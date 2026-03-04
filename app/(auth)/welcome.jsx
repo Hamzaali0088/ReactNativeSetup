@@ -18,11 +18,11 @@ import {
 WebBrowser.maybeCompleteAuthSession();
 
 // Web uses its own origin as the redirect URI (registered as http://localhost:8081 in Google Console).
-// Native/Expo Go routes through the Expo Auth Proxy (registered as https://auth.expo.io/@uxamabt/svift).
+// Native/Expo Go routes through the Expo Auth Proxy (registered as https://auth.expo.io/@avalunas-organization/svift).
 const isWeb = Platform.OS === 'web';
 const redirectUri = isWeb
   ? AuthSession.makeRedirectUri()
-  : 'https://auth.expo.io/@uxamabt/svift';
+  : 'https://auth.expo.io/@avalunas-organization/svift';
 
 export default function WelcomeScreen() {
   const router = useRouter();
