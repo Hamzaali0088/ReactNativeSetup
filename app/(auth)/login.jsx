@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import axios from 'axios';
 import { API_BASE_URL } from '@/lib/config';
 import { ArrowLeft } from 'iconsax-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setAuthUser } from '@/lib/authStorage';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -32,9 +32,9 @@ export default function LoginScreen() {
           params: { email, mode: 'login' },
         });
       } else {
-        const token = response.data?.token;
-        if (token) {
-          await AsyncStorage.setItem('svift_access_token', token);
+        const { token, email, name } = response.data || {};
+        if (token && email) {
+          await setAuthUser({ email, name: name || '', accesstoken: token });
         }
         router.replace('/(tabs)');
       }

@@ -7,7 +7,7 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setAuthUser } from '@/lib/authStorage';
 import {
   API_BASE_URL,
   GOOGLE_WEB_CLIENT_ID,
@@ -33,7 +33,7 @@ export default function WelcomeScreen() {
       androidClientId: GOOGLE_ANDROID_CLIENT_ID,
       iosClientId: GOOGLE_IOS_CLIENT_ID,
       redirectUri,
-      scopes: ['profile', 'email'],
+      scopes: ['openid', 'profile', 'email'],
       responseType: 'token',
     },
     { authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth' },
@@ -67,10 +67,28 @@ export default function WelcomeScreen() {
 
   async function authenticateWithBackend(accessToken) {
     try {
+      let googleName = '';
+      try {
+        const userRes = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const googleUser = userRes.ok ? await userRes.json() : {};
+        googleName = (googleUser.name && String(googleUser.name).trim())
+          || [googleUser.given_name, googleUser.family_name].filter(Boolean).join(' ').trim()
+          || (googleUser.email && googleUser.email.split('@')[0])
+          || '';
+      } catch (_) {
+        // Fallback to backend if client-side fetch fails (e.g. CORS)
+      }
+
       const result = await axios.post(`${API_BASE_URL}/auth/login/google`, { accessToken });
-      const token = result.data?.token;
-      if (token) {
-        await AsyncStorage.setItem('svift_access_token', token);
+      const { token, email, name } = result.data || {};
+      if (token && email) {
+        await setAuthUser({
+          email,
+          name: googleName || name || '',
+          accesstoken: token,
+        });
         router.replace('/(tabs)');
       }
     } catch (err) {

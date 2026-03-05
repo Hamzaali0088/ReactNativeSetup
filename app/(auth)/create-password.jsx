@@ -3,7 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
 import { API_BASE_URL } from '@/lib/config';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setAuthUser } from '@/lib/authStorage';
 
 export default function CreatePasswordScreen() {
   const router = useRouter();
@@ -33,9 +33,9 @@ export default function CreatePasswordScreen() {
         password,
       });
 
-      const token = response.data?.token;
-      if (token) {
-        await AsyncStorage.setItem('svift_access_token', token);
+      const { token, email: resEmail, name } = response.data || {};
+      if (token && resEmail) {
+        await setAuthUser({ email: resEmail, name: name || '', accesstoken: token });
       }
       router.replace('/(tabs)');
     } catch (err) {

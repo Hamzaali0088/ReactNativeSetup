@@ -7,6 +7,7 @@ import { CircleFlag } from 'react-circle-flags';
 import { Notification, DirectUp, WalletAdd1, InfoCircle, ProfileAdd, ArrowRight, Scan,DirectSend, Global, HomeTrendUp, ReceiptText, } from 'iconsax-react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthUser } from '@/lib/authStorage';
 import InviteFriendImg from '../../assets/images/invite-friend.png';
 
 const SERVICES = [
@@ -19,7 +20,7 @@ const SERVICES = [
 ];
 
 export default function HomeScreen() {
-  const userName = 'Khurram';
+  const [userName, setUserName] = useState('User');
   const balance = '3634.22';
   const currency = 'EUR';
   const router = useRouter();
@@ -46,6 +47,12 @@ export default function HomeScreen() {
       useNativeDriver: true,
     }).start(() => setShowAccountOptions(false));
   }
+
+  useEffect(() => {
+    getAuthUser().then(({ name }) => {
+      if (name) setUserName(name);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     AsyncStorage.getItem('svift_is_verified')

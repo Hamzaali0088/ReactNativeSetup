@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAccessToken } from '@/lib/authStorage';
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -11,7 +11,7 @@ export default function SplashScreen() {
 
     async function bootstrap() {
       try {
-        const token = await AsyncStorage.getItem('svift_access_token');
+        const token = await getAccessToken();
         const target = token ? '/(tabs)' : '/(auth)/welcome';
         if (!isMounted) return;
         setTimeout(() => {
