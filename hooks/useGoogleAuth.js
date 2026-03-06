@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import * as AuthSession from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import Constants from 'expo-constants';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import axios from 'axios';
 import { setAuthUser } from '@/lib/authStorage';
 import {
@@ -15,27 +17,25 @@ import {
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Native module only exists in dev/production builds, not in Expo Go
-let GoogleSignin = null;
-try {
-  GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+const isWeb = Platform.OS === 'web';
+// storeClient = Expo Go, standalone/bare = real build
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
+const useNativeSignIn = !isWeb && !isExpoGo;
+
+if (useNativeSignIn) {
   GoogleSignin.configure({
     webClientId: GOOGLE_WEB_CLIENT_ID,
     androidClientId: GOOGLE_ANDROID_CLIENT_ID,
     iosClientId: GOOGLE_IOS_CLIENT_ID,
     scopes: ['profile', 'email'],
   });
-} catch (_) {
-  // Expo Go: native module not available
 }
-
-const isWeb = Platform.OS === 'web';
-const useNativeSignIn = !isWeb && GoogleSignin != null;
 
 export function useGoogleAuth() {
   const router = useRouter();
   const webRedirectUri = AuthSession.makeRedirectUri();
 
+  // Always call hook (rules of hooks) – only active on web / Expo Go
   const [, webResponse, webPromptAsync] = Google.useAuthRequest(
     {
       webClientId: GOOGLE_WEB_CLIENT_ID,
@@ -49,7 +49,7 @@ export function useGoogleAuth() {
   );
 
   useEffect(() => {
-    if ((!isWeb && useNativeSignIn) || !webResponse) return;
+    if (useNativeSignIn || !webResponse) return;
     if (webResponse.type === 'success') {
       const accessToken =
         webResponse.authentication?.accessToken ?? webResponse.params?.access_token;
@@ -98,7 +98,7 @@ export function useGoogleAuth() {
     }
 
     if (useNativeSignIn) {
-      // Dev/production build: native Google Sign-In
+      // APK / dev build: native Google Sign-In (no redirect URIs needed)
       try {
         await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
         const userInfo = await GoogleSignin.signIn();
@@ -111,13 +111,13 @@ export function useGoogleAuth() {
         const googleName = userInfo.data?.user?.name || userInfo.user?.name || '';
         await handleBackendAuth(accessToken, googleName);
       } catch (err) {
-        console.error('Native Google Sign-In error:', err);
-        Alert.alert('Login Failed', err?.message || 'Could not sign in with Google.');
+        console.error('Native Google Sign-In error:', JSON.stringify(err));
+        Alert.alert('Sign-In Error', err?.message || JSON.stringify(err));
       }
       return;
     }
 
-    // Expo Go: use expo-auth-session (may have redirect issues)
+    // Expo Go only – proxy may not work
     webPromptAsync({ useProxy: true });
   }
 
