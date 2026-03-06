@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import * as AuthSession from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import Constants from 'expo-constants';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import axios from 'axios';
 import { setAuthUser } from '@/lib/authStorage';
@@ -18,14 +17,10 @@ import {
 WebBrowser.maybeCompleteAuthSession();
 
 const isWeb = Platform.OS === 'web';
-// storeClient = Expo Go, standalone/bare = real build
-const isExpoGo = Constants.executionEnvironment === 'storeClient';
-const useNativeSignIn = !isWeb && !isExpoGo;
 
-if (useNativeSignIn) {
+if (!isWeb) {
   GoogleSignin.configure({
     webClientId: GOOGLE_WEB_CLIENT_ID,
-    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
     iosClientId: GOOGLE_IOS_CLIENT_ID,
     scopes: ['profile', 'email'],
   });
@@ -35,13 +30,13 @@ export function useGoogleAuth() {
   const router = useRouter();
   const webRedirectUri = AuthSession.makeRedirectUri();
 
-  // Always call hook (rules of hooks) – only active on web / Expo Go
+  // Web only – hook must always be called (rules of hooks)
   const [, webResponse, webPromptAsync] = Google.useAuthRequest(
     {
       webClientId: GOOGLE_WEB_CLIENT_ID,
       androidClientId: GOOGLE_ANDROID_CLIENT_ID,
       iosClientId: GOOGLE_IOS_CLIENT_ID,
-      redirectUri: isWeb ? webRedirectUri : 'https://auth.expo.io/@avalunas-organization/svift',
+      redirectUri: webRedirectUri,
       scopes: ['openid', 'profile', 'email'],
       responseType: 'token',
     },
@@ -49,7 +44,7 @@ export function useGoogleAuth() {
   );
 
   useEffect(() => {
-    if (useNativeSignIn || !webResponse) return;
+    if (!isWeb || !webResponse) return;
     if (webResponse.type === 'success') {
       const accessToken =
         webResponse.authentication?.accessToken ?? webResponse.params?.access_token;
@@ -97,28 +92,23 @@ export function useGoogleAuth() {
       return;
     }
 
-    if (useNativeSignIn) {
-      // APK / dev build: native Google Sign-In (no redirect URIs needed)
-      try {
-        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-        const userInfo = await GoogleSignin.signIn();
-        const tokens = await GoogleSignin.getTokens();
-        const accessToken = tokens.accessToken;
-        if (!accessToken) {
-          Alert.alert('Google Sign-In Failed', 'No access token received.');
-          return;
-        }
-        const googleName = userInfo.data?.user?.name || userInfo.user?.name || '';
-        await handleBackendAuth(accessToken, googleName);
-      } catch (err) {
-        console.error('Native Google Sign-In error:', JSON.stringify(err));
-        Alert.alert('Sign-In Error', err?.message || JSON.stringify(err));
+    // Native Android / iOS – uses GoogleSignin directly, no browser, no redirect URIs
+    try {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      await GoogleSignin.signOut(); // ensure fresh sign-in picker appears
+      const userInfo = await GoogleSignin.signIn();
+      const tokens = await GoogleSignin.getTokens();
+      const accessToken = tokens.accessToken;
+      if (!accessToken) {
+        Alert.alert('Google Sign-In Failed', 'No access token received.');
+        return;
       }
-      return;
+      const googleName = userInfo.data?.user?.name || userInfo.user?.name || '';
+      await handleBackendAuth(accessToken, googleName);
+    } catch (err) {
+      console.error('Google Sign-In error:', JSON.stringify(err));
+      Alert.alert('Sign-In Error', err?.message || JSON.stringify(err));
     }
-
-    // Expo Go only – proxy may not work
-    webPromptAsync({ useProxy: true });
   }
 
   return { signInWithGoogle };
