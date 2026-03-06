@@ -6,8 +6,10 @@ import axios from 'axios';
 import { API_BASE_URL } from '@/lib/config';
 import { ArrowLeft } from 'iconsax-react-native';
 import { setAuthUser } from '@/lib/authStorage';
+import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 
 export default function LoginScreen() {
+  const { signInWithGoogle } = useGoogleAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -106,8 +108,6 @@ export default function LoginScreen() {
         </View>
         </View>
 
-
-
         {error ? (
           <Text className="text-xs text-red-500 mb-4">{error}</Text>
         ) : null}
@@ -130,7 +130,10 @@ export default function LoginScreen() {
           </View>
 
           <View className="flex-row gap-3 mb-4">
-            <Pressable className="flex-1 border border-neutral-200 rounded-full py-3 items-center bg-white flex-row justify-center gap-2">
+            <Pressable
+              className="flex-1 border border-neutral-200 rounded-full py-3 items-center bg-white flex-row justify-center gap-2"
+              onPress={signInWithGoogle}
+            >
               <MaterialCommunityIcons name="google" size={18} color="#000000" />
               <Text className="text-sm font-medium text-neutral-800">Google</Text>
             </Pressable>

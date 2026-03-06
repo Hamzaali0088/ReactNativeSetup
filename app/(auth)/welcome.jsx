@@ -17,8 +17,7 @@ import {
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Web uses its own origin as the redirect URI (registered as http://localhost:8081 in Google Console).
-// Native/Expo Go routes through the Expo Auth Proxy (registered as https://auth.expo.io/@avalunas-organization/svift).
+// Web: use app origin. Native: use Expo Auth Proxy (must be in Google Console redirect URIs).
 const isWeb = Platform.OS === 'web';
 const redirectUri = isWeb
   ? AuthSession.makeRedirectUri()
@@ -40,7 +39,6 @@ export default function WelcomeScreen() {
   );
 
   useEffect(() => {
-    // Log the redirect URI so you can register it in Google Cloud Console
     console.log('[Google OAuth] Redirect URI to register:', redirectUri);
   }, []);
 
