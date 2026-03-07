@@ -1,13 +1,14 @@
 import { View, Text, ScrollView, Pressable, Platform, Modal, Animated } from 'react-native';
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Colors } from '@/constants/Colors';
 import { Image } from 'expo-image';
 import { CircleFlag } from 'react-circle-flags';
-import { Notification, DirectUp, WalletAdd1, InfoCircle, ProfileAdd, ArrowRight, Scan,DirectSend, Global, HomeTrendUp, ReceiptText, } from 'iconsax-react-native';
-import { useRouter } from 'expo-router';
+import { Notification, DirectUp, WalletAdd1, InfoCircle, ProfileAdd, ArrowRight, Scan, DirectSend, Global, HomeTrendUp, ReceiptText } from 'iconsax-react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuthUser } from '@/lib/authStorage';
+import { useProfilePhotoStore } from '@/lib/profilePhotoStore';
 import InviteFriendImg from '../../assets/images/invite-friend.png';
 
 const SERVICES = [
@@ -48,11 +49,18 @@ export default function HomeScreen() {
     }).start(() => setShowAccountOptions(false));
   }
 
-  useEffect(() => {
-    getAuthUser().then(({ name }) => {
+  const profilePhotoUrl = useProfilePhotoStore((s) => s.profilePhotoUrl);
+  const setStorePhoto = useProfilePhotoStore((s) => s.setProfilePhotoUrl);
+
+  function loadUser() {
+    getAuthUser().then(({ name, profilePhotoUrl: url }) => {
       if (name) setUserName(name);
+      setStorePhoto(url ?? null);
     }).catch(() => {});
-  }, []);
+  }
+
+  useEffect(() => { loadUser(); }, []);
+  useFocusEffect(React.useCallback(() => { loadUser(); }, []));
 
   useEffect(() => {
     AsyncStorage.getItem('svift_is_verified')
@@ -74,18 +82,24 @@ export default function HomeScreen() {
       <View className="bg-primarybg pb-5  glassy-border"
       >
         <View className="flex-row items-center justify-between px-5 pt-14 pb-4">
-          <View className="flex-row items-center gap-3">
-            <View className="h-11 w-11 rounded-full bg-primary items-center justify-center"
-            >
-              <Text className="text-xl font-bold text-neutral-900">
-                {userName.charAt(0).toUpperCase()}
-              </Text>
+          <Pressable
+            className="flex-row items-center gap-3 active:opacity-70"
+            onPress={() => router.push('/profile' as never)}
+          >
+            <View className="h-11 w-11 rounded-full overflow-hidden bg-primary items-center justify-center">
+              {profilePhotoUrl ? (
+                <Image source={{ uri: profilePhotoUrl }} className="h-11 w-11" contentFit="cover" />
+              ) : (
+                <Text className="text-xl font-bold text-neutral-900">
+                  {userName.charAt(0).toUpperCase()}
+                </Text>
+              )}
             </View>
             <View>
               <Text className="text-[14px] text-amber-900/70 font-regular">Welcome</Text>
               <Text className="text-[16px] font-medium text-neutral-900">{userName}</Text>
             </View>
-          </View>
+          </Pressable>
           <Pressable className="h-11 w-11 rounded-full shadow-[inset_3px_0_6px_rgba(255,255,143,0.9),inset_0_3px_6px_rgba(255,255,143,0.9)] flex items-center justify-center ">
             <Notification size={20} color="#000000" />  
           </Pressable>

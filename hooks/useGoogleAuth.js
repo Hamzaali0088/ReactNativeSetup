@@ -7,6 +7,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import axios from 'axios';
 import { setAuthUser } from '@/lib/authStorage';
+import { useProfilePhotoStore } from '@/lib/profilePhotoStore';
 import {
   API_BASE_URL,
   GOOGLE_WEB_CLIENT_ID,
@@ -49,7 +50,7 @@ export function useGoogleAuth() {
       const accessToken =
         webResponse.authentication?.accessToken ?? webResponse.params?.access_token;
       if (accessToken) {
-        handleBackendAuth(accessToken, '');
+        handleBackendAuth(accessToken, '', null);
       } else {
         Alert.alert('Google Sign-In Failed', 'No access token received.');
       }
@@ -58,27 +59,38 @@ export function useGoogleAuth() {
     }
   }, [webResponse]);
 
-  async function handleBackendAuth(accessToken, googleName) {
+  async function handleBackendAuth(accessToken, googleName, googlePicture) {
     try {
       let name = googleName;
-      if (!name) {
+      let pictureFromUserinfo = googlePicture;
+      if (!name || !pictureFromUserinfo) {
         try {
           const userRes = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
           const googleUser = userRes.ok ? await userRes.json() : {};
-          name =
-            (googleUser.name && String(googleUser.name).trim()) ||
-            [googleUser.given_name, googleUser.family_name].filter(Boolean).join(' ').trim() ||
-            (googleUser.email && googleUser.email.split('@')[0]) ||
-            '';
+          if (!name) {
+            name =
+              (googleUser.name && String(googleUser.name).trim()) ||
+              [googleUser.given_name, googleUser.family_name].filter(Boolean).join(' ').trim() ||
+              (googleUser.email && googleUser.email.split('@')[0]) ||
+              '';
+          }
+          if (!pictureFromUserinfo && googleUser.picture) {
+            pictureFromUserinfo = String(googleUser.picture).trim() || null;
+          }
         } catch (_) {}
       }
 
       const result = await axios.post(`${API_BASE_URL}/auth/login/google`, { accessToken });
-      const { token, email, name: backendName } = result.data || {};
+      const { token, email, name: backendName, profilePhotoUrl } = result.data || {};
       if (token && email) {
-        await setAuthUser({ email, name: name || backendName || '', accesstoken: token });
+        // Use backend profilePhotoUrl if present, else fallback to Google userinfo picture
+        const finalProfilePhotoUrl = profilePhotoUrl || pictureFromUserinfo || null;
+        await setAuthUser({ email, name: name || backendName || '', accesstoken: token, profilePhotoUrl: finalProfilePhotoUrl });
+        if (finalProfilePhotoUrl) {
+          useProfilePhotoStore.getState().setProfilePhotoUrl(finalProfilePhotoUrl);
+        }
         router.replace('/(tabs)');
       }
     } catch (err) {
@@ -104,7 +116,8 @@ export function useGoogleAuth() {
         return;
       }
       const googleName = userInfo.data?.user?.name || userInfo.user?.name || '';
-      await handleBackendAuth(accessToken, googleName);
+      const googlePhoto = userInfo.data?.user?.photo || userInfo.user?.photo || null;
+      await handleBackendAuth(accessToken, googleName, googlePhoto);
     } catch (err) {
       console.error('Google Sign-In error:', JSON.stringify(err));
       Alert.alert('Sign-In Error', err?.message || JSON.stringify(err));

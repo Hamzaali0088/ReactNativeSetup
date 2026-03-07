@@ -6,6 +6,7 @@ import axios from 'axios';
 import { API_BASE_URL } from '@/lib/config';
 import { ArrowLeft } from 'iconsax-react-native';
 import { setAuthUser } from '@/lib/authStorage';
+import { useProfilePhotoStore } from '@/lib/profilePhotoStore';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 
 export default function LoginScreen() {
@@ -34,9 +35,10 @@ export default function LoginScreen() {
           params: { email, mode: 'login' },
         });
       } else {
-        const { token, email, name } = response.data || {};
+        const { token, email, name, profilePhotoUrl } = response.data || {};
         if (token && email) {
-          await setAuthUser({ email, name: name || '', accesstoken: token });
+          await setAuthUser({ email, name: name || '', accesstoken: token, profilePhotoUrl });
+          if (profilePhotoUrl) useProfilePhotoStore.getState().setProfilePhotoUrl(profilePhotoUrl);
         }
         router.replace('/(tabs)');
       }

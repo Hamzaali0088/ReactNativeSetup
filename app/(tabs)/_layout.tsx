@@ -8,7 +8,7 @@ import { Home, Profile2User, ReceiveSquare2, DirectUp } from 'iconsax-react-nati
 const TAB_YELLOW = '#FACC15';
 const TAB_DEFAULT = '#9CA3AF';
 
-const HIDE_TAB_BAR_ROUTES = ['account-limits', 'additional-information', 'upload-proof-of-funds', 'statements-history'];
+const HIDE_TAB_BAR_ROUTES = ['account-limits', 'additional-information', 'upload-proof-of-funds', 'statements-history', 'profile'];
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const currentRouteName = state.routes[state.index]?.name ?? '';
@@ -226,6 +226,13 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="statements-history"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
         options={{
           href: null,
           tabBarStyle: { display: 'none' },

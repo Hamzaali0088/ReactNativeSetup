@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
 import { API_BASE_URL } from '@/lib/config';
 import { setAuthUser } from '@/lib/authStorage';
+import { useProfilePhotoStore } from '@/lib/profilePhotoStore';
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
@@ -35,9 +36,10 @@ export default function VerifyEmailScreen() {
         code: joinedCode,
       });
       if (mode === 'login') {
-        const { token, email: resEmail, name } = response.data || {};
+        const { token, email: resEmail, name, profilePhotoUrl } = response.data || {};
         if (token && resEmail) {
-          await setAuthUser({ email: resEmail, name: name || '', accesstoken: token });
+          await setAuthUser({ email: resEmail, name: name || '', accesstoken: token, profilePhotoUrl });
+          if (profilePhotoUrl) useProfilePhotoStore.getState().setProfilePhotoUrl(profilePhotoUrl);
         }
         router.replace('/(tabs)');
       } else {
