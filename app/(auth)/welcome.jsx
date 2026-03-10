@@ -4,12 +4,14 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { useAppleAuth } from '@/hooks/useAppleAuth';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const { signInWithGoogle } = useGoogleAuth();
+  const { signInWithApple, showAppleButton } = useAppleAuth();
 
   return (
     <ScrollView className="flex-1 bg-white" contentContainerStyle={{ flexGrow: 1 }}>
@@ -47,10 +49,15 @@ export default function WelcomeScreen() {
               <MaterialCommunityIcons name="google" size={18} color="#000000" />
               <Text className="text-sm font-medium text-neutral-800">Google</Text>
             </Pressable>
-            <Pressable className="flex-1 bg-black rounded-full py-3 items-center flex-row justify-center gap-2">
-              <MaterialCommunityIcons name="apple" size={18} color="#ffffff" />
-              <Text className="text-sm font-medium text-white">Apple</Text>
-            </Pressable>
+            {showAppleButton && (
+              <Pressable
+                className="flex-1 bg-black rounded-full py-3 items-center flex-row justify-center gap-2"
+                onPress={signInWithApple}
+              >
+                <MaterialCommunityIcons name="apple" size={18} color="#ffffff" />
+                <Text className="text-sm font-medium text-white">Apple</Text>
+              </Pressable>
+            )}
           </View>
         </View>
 

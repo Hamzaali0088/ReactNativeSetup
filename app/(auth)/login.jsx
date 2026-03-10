@@ -8,9 +8,11 @@ import { ArrowLeft } from 'iconsax-react-native';
 import { setAuthUser } from '@/lib/authStorage';
 import { useProfilePhotoStore } from '@/lib/profilePhotoStore';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { useAppleAuth } from '@/hooks/useAppleAuth';
 
 export default function LoginScreen() {
   const { signInWithGoogle } = useGoogleAuth();
+  const { signInWithApple, showAppleButton } = useAppleAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -139,10 +141,15 @@ export default function LoginScreen() {
               <MaterialCommunityIcons name="google" size={18} color="#000000" />
               <Text className="text-sm font-medium text-neutral-800">Google</Text>
             </Pressable>
-            <Pressable className="flex-1 bg-black rounded-full py-3 items-center flex-row justify-center gap-2">
-              <MaterialCommunityIcons name="apple" size={18} color="#ffffff" />
-              <Text className="text-sm font-medium text-white">Apple</Text>
-            </Pressable>
+            {showAppleButton && (
+              <Pressable
+                className="flex-1 bg-black rounded-full py-3 items-center flex-row justify-center gap-2"
+                onPress={signInWithApple}
+              >
+                <MaterialCommunityIcons name="apple" size={18} color="#ffffff" />
+                <Text className="text-sm font-medium text-white">Apple</Text>
+              </Pressable>
+            )}
           </View>
         </View>
       </View>

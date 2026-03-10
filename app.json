@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "y"
+      "bundleIdentifier": "com.uxamabt.svift",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -44,6 +45,7 @@
       ],
       "expo-font",
       "expo-web-browser",
+      "expo-apple-authentication",
       [
         "expo-image-picker",
         {
